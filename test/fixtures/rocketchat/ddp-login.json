@@ -1,0 +1,12 @@
+{
+  "msg": "result",
+  "id": "1",
+  "result": {
+    "id": "b0tb0tb0tb0tb0tb0",
+    "token": "bot-token-0123456789abcdefghij",
+    "tokenExpires": {
+      "$date": null
+    },
+    "type": "resume"
+  }
+}

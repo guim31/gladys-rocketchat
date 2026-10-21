@@ -1,0 +1,35 @@
+{
+  "ts": 1792611421405,
+  "channel": "garagegaragegarag",
+  "message": {
+    "alias": "",
+    "msg": "!lights off",
+    "attachments": [],
+    "parseUrls": true,
+    "groupable": false,
+    "ts": "2026-10-21T19:37:01.339Z",
+    "u": {
+      "_id": "a1icea1icea1icea1",
+      "username": "alice",
+      "name": "alice"
+    },
+    "rid": "garagegaragegarag",
+    "_id": "a4hDzY5HjWkH2GrqG",
+    "_updatedAt": "2026-10-21T19:37:01.358Z",
+    "md": [
+      {
+        "type": "PARAGRAPH",
+        "value": [
+          {
+            "type": "PLAIN_TEXT",
+            "value": "!lights off"
+          }
+        ]
+      }
+    ],
+    "mentions": [],
+    "channels": [],
+    "urls": []
+  },
+  "success": true
+}

@@ -1,67 +1,158 @@
-# Template de démonstration
+# Rocket.Chat
 
-Ceci est la documentation utilisateur de l'intégration. Gladys ré-héberge ce
-fichier et affiche un lien **Documentation** permanent vers lui dans l'écran
-de configuration (dans la langue de l'utilisateur, avec l'anglais en repli) —
-c'est au moment de configurer que l'utilisateur en a le plus besoin. Gardez
-les courtes indications d'accueil dans les blocs `section` du `config_schema`
-du manifest ; mettez ici le pas-à-pas détaillé (captures d'écran, dépannage…).
+Parlez à Gladys depuis [Rocket.Chat](https://www.rocket.chat), la messagerie d'équipe libre que l'on peut
+héberger soi-même, comme avec le bot Telegram de Gladys : posez une question, lancez une scène, recevez les
+messages de Gladys en message privé. L'intégration écrit aussi dans des canaux Rocket.Chat depuis vos
+scènes, et lance des scènes quand un message ou une commande comme `!lumieres off` est écrit dans un canal
+qu'elle surveille. Elle utilise un compte robot de votre serveur Rocket.Chat, sur le réseau local ou sur
+Internet.
 
-## Ce que vous obtenez
+> **Développée sans le matériel : vos retours sont les bienvenus.** L'intégration a été testée contre un
+> vrai serveur Rocket.Chat (8.9, en Docker), mais pas dans un vrai Gladys ni avec tous les clients
+> Rocket.Chat. Dites ce qui marche et ce qui ne marche pas dans les
+> [issues](https://github.com/guim31/gladys-rocketchat/issues) ou sur le
+> [forum Gladys](https://community.gladysassistant.com).
 
-Six appareils de démonstration apparaissent après l'installation : une
-station météo (vraies données Open-Meteo), un interrupteur, une lampe
-variable, une prise connectée avec mesure de puissance, un détecteur de
-mouvement et une caméra.
+## Prérequis
+
+- Gladys Assistant **5.1.0** ou plus récent.
+- Un serveur Rocket.Chat joignable par Gladys (testé avec la 8.9 ; l'envoi d'images demande la 6.8 ou plus
+  récente), et un compte administrateur pour créer le robot.
+- Un **utilisateur pour le robot**, avec un jeton d'accès personnel. N'utilisez pas votre compte
+  personnel : le robot répond en son nom.
+- Le nom d'utilisateur de chaque personne autorisée à parler au robot, par exemple `alice`.
 
 ## Configuration
 
-1. Ouvrez l'onglet **Configuration** de l'intégration.
-2. Renseignez la **latitude** et la **longitude** que la station météo de
-   démonstration doit observer (Paris par défaut), et choisissez votre unité
-   de température. L'**intervalle de rafraîchissement** règle la fréquence
-   de lecture de la station météo et de la puissance de la prise : toutes
-   les 5 minutes par défaut, toutes les minutes au plus.
-3. Enregistrez : les appareils apparaissent dans l'onglet **Découverte**,
-   prêts à être ajoutés.
+1. Dans Rocket.Chat, **Administration → Utilisateurs → Nouvel utilisateur** : un nom d'utilisateur comme
+   `gladys`, une adresse e-mail et un mot de passe, les rôles **bot** et **user**.
+2. Connectez-vous à Rocket.Chat avec cet utilisateur, **Profil → Jeton d'accès personnel** : donnez un nom,
+   cochez **Ignorer l'authentification à deux facteurs**, cliquez sur **Ajouter**. Copiez le **jeton** et
+   l'**identifiant utilisateur** affichés une seule fois.
+3. Dans Gladys, **Intégrations → Rocket.Chat → Configuration** :
+   - **Adresse du serveur** : l'adresse de Rocket.Chat comme dans le navigateur, par exemple
+     `https://chat.example.org` ou `http://192.168.1.20:3000`.
+   - **Identifiant utilisateur du robot** et **Jeton d'accès personnel** : les deux valeurs de l'étape 2.
+   - **Personnes autorisées** : les noms d'utilisateur que le robot écoute, séparés par des virgules
+     (`alice, bob`), écrits comme dans Rocket.Chat : les majuscules comptent. **Vide, le robot ne répond à
+     personne** : il ignore les messages de tous ceux qui ne sont pas dans cette liste.
+   - **Canaux surveillés** : les canaux dont les messages lancent des scènes, écrits `#nom` (l'adresse
+     `https://chat.example.org/channel/garage` ou l'identifiant du canal sont acceptés aussi), séparés par
+     des virgules. Le robot rejoint seul les canaux publics ; ajoutez-le d'abord aux canaux privés.
+   - **Préfixe des commandes** : `!` par défaut (`/` est pris par les commandes slash de Rocket.Chat).
+   - **Langue du robot** : la langue de ce que le robot écrit avant qu'une personne soit liée.
+4. Cliquez sur **Tester la connexion** : le compte rendu donne le compte du robot, les canaux surveillés
+   qu'il a rejoints et les personnes autorisées trouvées. L'état de connexion de la page le dit aussi, et
+   nomme un canal ou une personne introuvable.
 
-Le réglage **Préférer la connexion locale** pilote la prise de
-démonstration : elle affiche en badge le canal réellement utilisé (local ou
-cloud), avec un point orange quand elle fonctionne en mode dégradé (local
-refusé, bascule cloud).
+### Lier votre compte Rocket.Chat pour parler à Gladys
 
-## Actions
+Chaque utilisateur de Gladys qui veut parler à Gladys depuis Rocket.Chat le fait une fois :
 
-- **Tester le fournisseur météo** — effectue une requête en direct vers
-  Open-Meteo et affiche la température et l'humidité actuelles sous le
-  bouton.
-- **Identifier un appareil** — choisissez un de vos appareils dans la liste
-  et il se signale (la lampe de démonstration « clignote » dans les logs).
+1. Dans Gladys, **Intégrations → Rocket.Chat → Configuration**, bloc « Lier mon compte » : cliquez sur
+   **Générer un code de liaison**.
+2. Dans Rocket.Chat, ouvrez un **message privé** avec le robot (l'icône crayon **Créer → Message privé**,
+   puis son nom d'utilisateur) et envoyez-lui le code (8 caractères). Le robot confirme : votre compte
+   Rocket.Chat est lié à votre utilisateur Gladys. Vous pouvez le délier depuis le même bloc.
 
-## Scènes
+## Ce que fait le robot
 
-L'intégration ajoute ses propres cartes à l'éditeur de scènes (Gladys 5.1
-ou plus récent), dans la catégorie **Intégrations** :
-
-- **Mouvement détecté** (déclencheur) — lance la scène quand un détecteur
-  de démonstration voit bouger quelque chose. Choisissez éventuellement le
-  détecteur et ce qui a bougé (personne, animal) ; laissés vides, toute
-  détection correspond. Les actions suivantes peuvent lire ce qui a bougé
-  avec `{{triggerEvent.data.target}}`.
-- **Identifier un appareil** (action) — fait se signaler l'appareil choisi.
-  Elle indique si l'appareil a pu se signaler, pour que les actions
-  suivantes puissent en dépendre.
+- **En message privé** avec une personne autorisée : il transmet les messages à Gladys, avec les droits de
+  l'utilisateur Gladys lié, exactement comme le bot Telegram : « Quelle est la température du salon ? »,
+  « Éteins les lumières ». Les réponses de Gladys reviennent dans ce message privé, le Markdown rendu par
+  Rocket.Chat. Les messages que Gladys vous envoie (l'action de scène **Envoyer un message**, les messages
+  système) y arrivent aussi, même avant toute conversation. Une image de caméra envoyée par une scène
+  arrive en image.
+- **Dans un canal surveillé** : chaque message d'une personne autorisée lance le déclencheur **Message
+  Rocket.Chat reçu**, et un message qui commence par le préfixe lance aussi **Commande Rocket.Chat
+  reçue**. Le robot n'y répond jamais de lui-même : la suite dépend de vos scènes.
+- **Dans tout autre salon** (un canal non surveillé, un message privé à plusieurs) : il se tait. Gladys ne
+  répond jamais là où d'autres peuvent lire.
+- **Ce qu'il ignore** : toute personne non autorisée, ses propres messages (une scène qui écrit dans un
+  canal surveillé ne se relance jamais elle-même), les messages des webhooks entrants et des applications
+  (même quand ils écrivent au nom d'une personne autorisée), les messages système (« a rejoint le
+  canal »), les modifications, et les messages de plus de 5 minutes quand il les lit (un « !ouvre garage »
+  d'il y a deux heures ne s'exécute pas maintenant).
+- **Après une coupure** (redémarrage du serveur, de Gladys, réseau perdu un instant) : il se reconnecte
+  seul, et relit les messages des canaux surveillés et des messages privés écrits dans les 5 dernières
+  minutes.
 
 ## Tableau de bord
 
-Ajoutez le widget **État de la démo** à un tableau de bord : il affiche en
-direct la température de la station météo et la puissance de la prise du
-bureau, la connexion utilisée par la prise (en orange si dégradée) et la
-position observée. Son bouton **Identifier la lampe** fait se signaler la
-lampe de démonstration.
+Le widget **Rocket.Chat** montre si le robot est connecté, son compte, les canaux surveillés qu'il a
+rejoints, les 5 derniers messages reçus dans les canaux surveillés (auteur, texte, date) et un bouton
+**Tester la connexion**. Les messages privés avec Gladys n'y figurent jamais : tous ceux qui voient le
+tableau de bord voient le widget.
+
+## Scènes
+
+### Déclencheurs
+
+- **Message Rocket.Chat reçu** : une personne autorisée a écrit dans un canal surveillé. Filtres (vide =
+  tous) : **Canal** (écrit comme dans la configuration, par exemple `#garage`) et **Expéditeur** (le nom
+  d'utilisateur, sans `@` : `alice`). Variables : Message, Expéditeur, Canal, Identifiant du canal.
+- **Commande Rocket.Chat reçue** : une personne autorisée a écrit une commande dans un canal surveillé : le
+  préfixe, puis un mot, puis d'éventuels arguments, par exemple `!lumieres off cuisine`. Filtre
+  **Commande** : le mot **sans le préfixe, en minuscules** (`lumieres`) ; et Canal, Expéditeur. Variables :
+  Commande (`lumieres`), Arguments (`off cuisine`), Message, Expéditeur, Canal, Identifiant du canal. Le
+  même message lance aussi **Message Rocket.Chat reçu**.
+- **Connexion Rocket.Chat perdue** : le robot ne joint plus le serveur, depuis une minute, ou son jeton est
+  refusé. Variable : Erreur. Lancé une fois, jusqu'au retour de la connexion.
+- **Connexion Rocket.Chat rétablie** : le robot joint de nouveau le serveur après une perte de connexion.
+  Variable : Compte du robot (nom d'utilisateur).
+
+### Actions
+
+- **Envoyer un message Rocket.Chat** : écrit un message dans un canal (`#nom`, son adresse ou son
+  identifiant), ou à une personne en message privé (`@alice`). Le message accepte les variables de scène et
+  le Markdown de Rocket.Chat (`**gras**`, `_italique_`, listes, liens, `@here`). Un canal public accepte le
+  message même si le robot n'en est pas membre ; un canal privé seulement s'il l'est. Résultats : Envoyé
+  (oui/non), Identifiant du message, Erreur. Un message raté n'arrête pas la scène : testez **Envoyé** par
+  une condition si besoin.
+
+Pour écrire à un utilisateur de Gladys, l'action **Envoyer un message** de Gladys marche aussi : elle
+atteint son compte Rocket.Chat lié.
+
+### Idées de scènes
+
+- **Garage par commande** : déclencheur **Commande Rocket.Chat reçue**, commande `garage`, canal
+  `#garage` ; puis une condition sur la variable Arguments égale à `ferme`, et l'action qui ferme le
+  garage.
+- **Fin de la machine à laver** : quand la puissance de la prise de la machine retombe, **Envoyer un
+  message Rocket.Chat** à `#famille` : « La machine à laver a fini @here ».
+- **Alerte quand le robot est coupé** : déclencheur **Connexion Rocket.Chat perdue**, puis une notification
+  par un autre canal (Gotify, ntfy, SMS) avec la variable Erreur.
 
 ## Dépannage
 
-L'intégration journalise tout ce qu'elle fait : consultez les logs de
-l'intégration depuis l'interface Gladys (ou `docker logs` sur l'hôte) avec
-`LOG_LEVEL=debug` pour le détail complet.
+- **« pas de serveur Rocket.Chat à cette adresse »** : utilisez l'adresse avec laquelle vous ouvrez
+  Rocket.Chat dans le navigateur, sans `/home` ni canal. `https://<adresse>/api/info` doit répondre
+  `{"version":…,"success":true}`.
+- **« identifiant ou jeton d'accès refusé »** : le jeton a été supprimé, l'identifiant n'est pas celui du
+  jeton, ou le compte du robot a été désactivé. Créez un nouveau jeton dans **Profil → Jeton d'accès
+  personnel**.
+- **Un canal surveillé n'est pas rejoint** : l'état de la page et le test le nomment. Vérifiez le nom du
+  canal, ajoutez-y le robot s'il est privé, puis enregistrez de nouveau la configuration.
+- **Le robot ne me répond pas** : votre nom d'utilisateur est-il dans **Personnes autorisées**, écrit
+  exactement, avec les mêmes majuscules ? Lui écrivez-vous en message privé avec lui seul ? Votre compte
+  est-il lié (le robot vous donne alors la marche à suivre) ?
+- **Une commande ne lance pas la scène** : le filtre Commande est le mot sans le préfixe, en minuscules :
+  `lumieres`, pas `!Lumieres`.
+- **Derrière un proxy inverse**, le WebSocket (`/websocket`) doit être transmis aussi, comme pour les
+  applications Rocket.Chat.
+- Plus de détails dans les journaux de l'intégration avec `LOG_LEVEL=debug`.
+
+## Limites
+
+- Une personne liée à Gladys peut faire depuis Rocket.Chat tout ce que peut faire son utilisateur Gladys :
+  gardez une liste de personnes autorisées courte, et le jeton du robot secret.
+- Un compte robot par Gladys. Le robot lit les messages par l'API temps réel de Rocket.Chat (DDP sur le
+  WebSocket) : une commande prend effet en une seconde environ. Les messages manqués pendant une coupure
+  de plus de 5 minutes sont sautés.
+- Les fichiers, images et messages vocaux envoyés au robot sont ignorés ; seul le texte compte. Les fils
+  de discussion sont lus comme des messages ordinaires, et les réponses de Gladys ne vont pas dans le fil.
+- Un message compte 5000 caractères au plus par défaut (réglage **Message → Taille maximale autorisée du
+  message**) : une réponse plus longue de Gladys est coupée. Le rôle bot est dispensé des limites de débit
+  de l'API du serveur.
+- Sans lien avec Rocket.Chat Technologies Corp. Rocket.Chat est une marque de Rocket.Chat Technologies
+  Corp.

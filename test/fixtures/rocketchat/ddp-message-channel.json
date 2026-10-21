@@ -1,0 +1,49 @@
+{
+  "msg": "changed",
+  "collection": "stream-room-messages",
+  "id": "id",
+  "fields": {
+    "eventName": "__my_messages__",
+    "args": [
+      {
+        "_id": "zQvNptB4xGzKjXWyu",
+        "alias": "",
+        "msg": "!lights off",
+        "attachments": [],
+        "parseUrls": true,
+        "groupable": false,
+        "ts": {
+          "$date": 1792611453837
+        },
+        "u": {
+          "_id": "a1icea1icea1icea1",
+          "username": "alice",
+          "name": "alice"
+        },
+        "rid": "garagegaragegarag",
+        "_updatedAt": {
+          "$date": 1792611453854
+        },
+        "md": [
+          {
+            "type": "PARAGRAPH",
+            "value": [
+              {
+                "type": "PLAIN_TEXT",
+                "value": "!lights off"
+              }
+            ]
+          }
+        ],
+        "mentions": [],
+        "channels": [],
+        "urls": []
+      },
+      {
+        "roomParticipant": true,
+        "roomType": "c",
+        "roomName": "garage"
+      }
+    ]
+  }
+}
