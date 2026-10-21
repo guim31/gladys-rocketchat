@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-21
+
 ### Added
 
 - Talk to Gladys from Rocket.Chat: each Gladys user links their Rocket.Chat
@@ -30,3 +32,6 @@ the notes of the version's GitHub Release.
 - Real-time messages over the DDP API of Rocket.Chat, automatic reconnection,
   and the messages of the last 5 minutes read back after a cut.
 - English, French, German and Spanish.
+
+[Unreleased]: https://github.com/guim31/gladys-rocketchat/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/guim31/gladys-rocketchat/releases/tag/v1.0.0
