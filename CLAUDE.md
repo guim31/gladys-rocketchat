@@ -32,15 +32,18 @@ pushing.
 
 ```
 index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
-src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+src/app.js                        the integration: connection loop, catch-up, linking, triggers,
+                                  scene action, onSendMessage, widget, test action
+src/rocketchat/client.js          REST API v1 over fetch, typed errors (RocketChatError.kind)
+src/rocketchat/ddp.js             the real-time API: DDP connect, login (resume), __my_messages__, pings
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
-gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
-test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+src/texts.js                      four-language texts outside the widget (status, report, bot)
+src/widgets.js                    the "rocketchat" dashboard widget
+src/store.js, src/log.js          /data persistence (atomic writes), one-line repeated failures
+gladys-assistant-integration.json manifest: communication type, receive: true, triggers, action...
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (mandatory)
+test/                             node --test, fake Gladys of the SDK + fake Rocket.Chat (REST, DDP)
+test/fixtures/rocketchat/         answers recorded from a real Rocket.Chat 8.9 (ids and tokens replaced)
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -70,8 +73,10 @@ test/                             node --test, against the SDK's fake Gladys (in
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+- **User-facing text** exists in English, French, German and Spanish: action
+  messages, manifest texts, what the bot writes, and `docs/en.md`,
+  `docs/fr.md`, `docs/de.md`, `docs/es.md`, kept in sync
+  (`test/i18n.test.js`).
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 
@@ -233,3 +238,42 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
 - Docs `en`, `fr`, `de`, `es` avec les mêmes sections.
 - Chauffe, ouverture, sécurité : ne rien rendre pilotable « comme un thermostat » ou par un assistant
   vocal quand une erreur serait dangereuse (leçon d'OctoPrint).
+
+## Rocket.Chat (cette intégration)
+
+- **Même architecture et mêmes clés que `guim31/gladys-mattermost`** (type `communication`,
+  `messaging.receive: true`, liaison par code, liste blanche vide = personne, `applyConfig` sérialisé,
+  `connection_restored` seulement après un `connection_lost` émis, délai unique de 4,5 s dans `onSendMessage`,
+  journaux calmes, rattrapage borné à 5 min et dédoublonné par identifiant) : lire son `CLAUDE.md`.
+  `linkContact` et `publishMessage` n'ont été vérifiés que contre le faux Gladys du SDK.
+- **Authentification** : `X-User-Id` + `X-Auth-Token` d'un jeton d'accès personnel (« Ignorer la 2FA » coché),
+  d'où deux champs de configuration (`user_id`, `access_token`). Sur le DDP, le même jeton passe par
+  `login` avec `{ resume: <jeton> }` (vérifié : un PAT est accepté) ; refusé, le serveur répond
+  `result.error.error = 401` « User not found ».
+- **Temps réel** : DDP sur `/websocket` (`connect` → `connected`, `login`, `sub` `stream-room-messages`
+  `["__my_messages__", false]` → `ready`). Chaque message arrive en `changed` avec
+  `args = [message, { roomType, roomName }]` ; les dates DDP sont `{ $date: ms }`, celles du REST des chaînes
+  ISO (`toMillis`). Une modification, une réaction ou un fil repoussent **le même `_id`** (avec `editedAt`) :
+  le dédoublonnage par identifiant suffit. Le serveur envoie `{msg:"ping"}` : répondre `pong`.
+- **Pièges payés contre un vrai Rocket.Chat 8.9 (Docker, MongoDB 7 en replica set, 21/10/2026)** :
+  - Les identifiants de salons et d'utilisateurs récents font **24 caractères hexadécimaux**, pas 17 ; le
+    salon direct n'est **pas** la concaténation des deux identifiants d'utilisateurs.
+  - Un salon `d` peut réunir **plusieurs personnes** : la conversation avec Gladys est le seul salon renvoyé
+    par `im.create` pour cette personne (gardé dans `contactChannels`), jamais un `roomType: "d"` seul.
+  - **`im.create` avec un nom inconnu ouvre un salon du robot avec lui-même** (200) : toujours vérifier la
+    personne par `users.info` avant.
+  - `users.info?username=` est **sensible à la casse** : les noms ne sont pas mis en minuscules.
+  - Presque tous les refus sont des **HTTP 400** avec un code dans `errorType` ou `error`
+    (`error-room-not-found`, `invalid-channel`, `not-allowed`, `error-not-allowed`,
+    `error-message-size-exceeded`, `User not found.`) : `kindOf` les range par code.
+  - `chat.postMessage` dans un **canal public** marche **sans en être membre** ; dans un privé, 400
+    `error-not-allowed`. Le robot n'entend que les salons dont il est membre : il rejoint les canaux publics
+    surveillés (`channels.join`, idempotent).
+  - Un **webhook entrant** peut poster **au nom d'une personne** (permission `message-impersonate`) : le
+    message porte `bot: { i: <intégration> }` et le `u` de la personne. Ignoré.
+  - `rooms.upload` n'existe plus (404) : `rooms.media` puis `rooms.mediaConfirm`. Le serveur décode l'image
+    (une image tronquée est refusée).
+  - Taille maximale d'un message : 5000 caractères par défaut. `X-RateLimit-Reset` est une **date en ms**.
+  - Banc d'essai : Rocket.Chat demande plus de 512 Mo de tas Node (`NODE_OPTIONS=--max-old-space-size`), et
+    une connexion par mot de passe déclenche la 2FA par e-mail (désactiver
+    `Accounts_TwoFactorAuthentication_Enabled`).

@@ -1,0 +1,21 @@
+{
+  "room": {
+    "_id": "garagegaragegarag",
+    "fname": "garage",
+    "_updatedAt": "2026-10-21T19:35:43.412Z",
+    "name": "garage",
+    "t": "c",
+    "msgs": 0,
+    "usersCount": 3,
+    "u": {
+      "_id": "adm1nadm1nadm1nad",
+      "username": "admin",
+      "name": "Administrator"
+    },
+    "ts": "2026-10-21T19:35:43.351Z",
+    "ro": false,
+    "default": false,
+    "sysMes": true
+  },
+  "success": true
+}
