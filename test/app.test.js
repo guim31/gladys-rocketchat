@@ -133,6 +133,8 @@ test('the bot obeys nobody else, and skips its own, system, webhook and old mess
   await say(world, GARAGE, '!garage open', ALICE_ID, { ts: iso(START - MAX_MESSAGE_AGE_MS - 1) });
   // An incoming webhook may post in the name of a person (recorded on 8.9): not the person.
   await say(world, GARAGE, '!garage open', ALICE_ID, { bot: { i: 'integrationintegr' } });
+  // An edit pushes the same message again, with editedAt: never a second run.
+  await say(world, GARAGE, '!garage open', ALICE_ID, { editedAt: iso(START) });
   assert.deepEqual(world.fake.sceneEvents, []);
   assert.deepEqual(world.fake.messages, []);
 });

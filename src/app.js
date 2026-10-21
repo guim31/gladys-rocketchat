@@ -68,7 +68,7 @@ export const RECENT_KEPT = 5;
 // Message ids already handled: the real-time API and the catch-up may both bring
 // one, and an edit or a reaction pushes the same message again.
 const SEEN_KEPT = 200;
-const SEEN_SAVED = 50;
+const SEEN_SAVED = 200;
 // Gladys waits 5 s for the ack of a message: answer before, even if the server is slow.
 export const MESSAGE_TIMEOUT_MS = 4500;
 // How long a message of Gladys waits for the first connection, within that deadline.
@@ -288,7 +288,11 @@ export function registerHandlers(gladys, options = {}) {
     for (const entry of config.channels) {
       try {
         const room = await resolveRoom(entry, signal);
-        if (room.t === 'c' && !(await client.isMember(room._id, { signal }))) {
+        if (!(await client.isMember(room._id, { signal }))) {
+          if (room.t !== 'c') {
+            // A private channel shown to an administrator account: never heard.
+            throw new RocketChatError(ERROR_KINDS.FORBIDDEN, 'The bot is not a member');
+          }
           // The bot hears only the rooms it is in: it joins a public channel.
           await client.joinChannel(room._id, { signal });
           logger.info(`Joined the watched channel ${entry}`);
@@ -476,6 +480,12 @@ export function registerHandlers(gladys, options = {}) {
   async function handleMessage(message, roomType) {
     if (!message || typeof message._id !== 'string' || seen.has(message._id)) {
       return;
+    }
+    if (message.editedAt) {
+      return; // an edit: the original was handled, or is too late to act on
+    }
+    if (!watched.has(message.rid) && roomType !== 'd') {
+      return; // a room the bot hears but does not listen to: kept out of `seen`
     }
     seen.add(message._id);
     if (seen.size > SEEN_KEPT) {
