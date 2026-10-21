@@ -166,6 +166,7 @@ export function registerHandlers(gladys, options = {}) {
   let watched = new Map(); // room id → the entry typed in the configuration
   let allowed = new Map(); // user id → username, for the allowed people found
   let failures = []; // channels and people of the configuration not found or not joined
+  let reportedFailures = ''; // the failures already logged: a reconnection does not repeat them
   let controller = null; // aborts the running loop
   let running = null; // the running loop
   let stopped = false;
@@ -263,6 +264,7 @@ export function registerHandlers(gladys, options = {}) {
     const user = await client.me({ signal });
     me = { id: user._id, username: user.username };
     const missing = [];
+    const notes = [];
 
     const people = new Map();
     for (const name of config.allowed_users) {
@@ -277,7 +279,7 @@ export function registerHandlers(gladys, options = {}) {
           throw err;
         }
         missing.push(`@${name}`);
-        logger.warn(`Allowed person @${name} not found on the server`);
+        notes.push(`Allowed person @${name} not found on the server`);
       }
     }
     allowed = people;
@@ -297,11 +299,15 @@ export function registerHandlers(gladys, options = {}) {
           throw err;
         }
         missing.push(entry);
-        logger.warn(`Cannot watch the channel ${entry}: ${err.message}`);
+        notes.push(`Cannot watch the channel ${entry}: ${err.message}`);
       }
     }
     watched = channels;
     failures = missing;
+    // Said once: the same failures on every reconnection go to debug.
+    const key = missing.join('|');
+    notes.forEach((note) => (key === reportedFailures ? logger.debug(note) : logger.warn(note)));
+    reportedFailures = key;
   }
 
   const partialStatus = () =>

@@ -274,6 +274,11 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
   - `rooms.upload` n'existe plus (404) : `rooms.media` puis `rooms.mediaConfirm`. Le serveur décode l'image
     (une image tronquée est refusée).
   - Taille maximale d'un message : 5000 caractères par défaut. `X-RateLimit-Reset` est une **date en ms**.
+- **Vérifié dans le bac à sable** (image construite, rootfs en lecture seule, `cap-drop ALL`, 256 Mo :
+  ~20 Mo au repos, ~29 Mo en charge) contre le vrai serveur, avec le faux Gladys du SDK : 27 contrôles dans
+  les deux sens (jeton refusé, jonction du canal public, déclencheurs, webhook au nom d'alice ignoré, liaison,
+  cerveau, message privé à plusieurs ignoré, réponse + image, action de scène vers canal, personne, inconnu,
+  privé, widget, rattrapage après redémarrage, perte et retour en mettant le serveur en pause).
   - Banc d'essai : Rocket.Chat demande plus de 512 Mo de tas Node (`NODE_OPTIONS=--max-old-space-size`), et
     une connexion par mot de passe déclenche la 2FA par e-mail (désactiver
     `Accounts_TwoFactorAuthentication_Enabled`).

@@ -110,8 +110,9 @@ npx -y github:GladysAssistant/integration-store --skip-image-check .
   (MIT): the shape of the configuration (server, account, room). No code was
   copied.
 - The logo on the cover is the Rocket.Chat logo from the
-  [Rocket.Chat repository](https://github.com/RocketChat/Rocket.Chat) (MIT; a
-  trademark of Rocket.Chat Technologies Corp.).
+  [Rocket.Chat repository](https://github.com/RocketChat/Rocket.Chat)
+  (`apps/meteor/public/images/logo/logo.svg`, MIT; a trademark of Rocket.Chat
+  Technologies Corp.), recolored white on the brand red.
 - The architecture, the `/data` store and the quiet logs come from
   [gladys-mattermost](https://github.com/guim31/gladys-mattermost) and
   [gladys-matrix](https://github.com/guim31/gladys-matrix); the tests follow
